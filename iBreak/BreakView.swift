@@ -57,7 +57,7 @@ struct BreakView: View {
             }
         }
         .onAppear(perform: setupView)
-        .onChange(of: breakTimer.currentMode) { newMode in
+        .onChange(of: breakTimer.currentMode) { _, newMode in
             if newMode == .working {
                 dismiss()
             }
