@@ -101,14 +101,19 @@ class BreakTimer: ObservableObject {
         Logger.log("BreakTimer: skipBreak() finished.", type: .debug)
     }
 
-    private func startNextWorkInterval() {
-        Logger.log("BreakTimer: startNextWorkInterval() called. workCycle: \(workCycle)", type: .debug)
-        workCycle = (workCycle + 1) % 2
+    private func startNextWorkInterval(reset: Bool = false) {
+        Logger.log("BreakTimer: startNextWorkInterval() called. workCycle: \(workCycle), reset: \(reset)", type: .debug)
+        if reset {
+            // When reset is true, we start with a short break
+            workCycle = 1
+        } else {
+            workCycle = (workCycle + 1) % 2
+        }
         currentMode = .working
         let duration = (workCycle == 1) ? settings.shortBreakInterval : settings.longBreakInterval
         targetDate = Date().addingTimeInterval(duration)
         scheduleNotification(duration: duration)
-        Logger.log("BreakTimer: startNextWorkInterval() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))", type: .debug)
+        Logger.log("BreakTimer: startNextWorkInterval() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate)), workCycle: \(workCycle)", type: .debug)
     }
 
     private func startNextBreak() {
@@ -151,7 +156,7 @@ class BreakTimer: ObservableObject {
                     Logger.log("BreakTimer: tick(): User is idle, but video is playing, resetting idle timer.", type: .debug)
                 } else {
                     Logger.log("BreakTimer: tick(): User is idle and no video is playing, resetting work timer.", type: .debug)
-                    startNextWorkInterval()
+                    startNextWorkInterval(reset: true)
                 }
             }
         }
