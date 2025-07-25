@@ -1,0 +1,28 @@
+# Xcode
+.DS_Store
+# Build products
+build/
+*.xcarchive
+*.xcworkspace
+# Generated files
+*.xcodeproj/project.xcworkspace
+*.xcodeproj/xcuserdata/
+# Swift Package Manager
+.swiftpm/
+# CocoaPods
+Pods/
+# Carthage
+Carthage/Build/
+# DerivedData
+DerivedData/
+# Playgrounds
+*.playground/
+# Logs
+*.log
+# Crash reports
+*.crash
+# User-specific files
+.vscode/
+.idea/
+# Other
+.tool-versions
