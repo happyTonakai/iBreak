@@ -142,10 +142,18 @@ class BreakTimer: ObservableObject {
             
             return
         }
-        if idleMonitor.getIdleTime() > settings.idleThreshold && currentMode == .working {
-            Logger.log("BreakTimer: tick(): User is idle, resetting work timer.", type: .debug)
-            startNextWorkInterval()
-            return
+        if currentMode == .working {
+            let currentIdleTime = idleMonitor.getIdleTime()
+            if currentIdleTime > settings.idleThreshold {
+                if isVideoPlayingViaPmset() {
+                    Logger.log("BreakTimer: tick(): User is idle, but video is playing. Resetting idle timer.", type: .debug)
+                    idleMonitor.resetIdleTime()
+                } else {
+                    Logger.log("BreakTimer: tick(): User is idle and no video is playing, resetting work timer.", type: .debug)
+                    startNextWorkInterval()
+                    return
+                }
+            }
         }
         if let targetDate = targetDate {
             let remaining = max(0, targetDate.timeIntervalSinceNow)
@@ -178,11 +186,44 @@ class BreakTimer: ObservableObject {
             Logger.log("BreakTimer: Notification not scheduled: duration (\(duration)) <= notificationTime (\(notificationTime)).", type: .info)
         }
     }
+
+    private func isVideoPlayingViaPmset() -> Bool {
+        let task = Process()
+        task.launchPath = "/usr/bin/pmset"
+        task.arguments = ["-g"]
+
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        if let output = String(data: data, encoding: .utf8) {
+            Logger.log("pmset -g output:\n\(output)", type: .debug)
+
+            // Check for the general string indicating display sleep prevention
+            if output.contains("display sleep prevented by") {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 class IdleTimeMonitor {
+    private var lastActivityTimestamp: Date
+
+    init() {
+        self.lastActivityTimestamp = Date()
+    }
+
     func getIdleTime() -> TimeInterval {
-        let anyEventType = CGEventType(rawValue: ~0)!
-        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyEventType)
+        // This will return the time since our last recorded activity/reset
+        return Date().timeIntervalSince(lastActivityTimestamp)
+    }
+
+    func resetIdleTime() {
+        Logger.log("IdleTimeMonitor: resetIdleTime() called.", type: .debug)
+        lastActivityTimestamp = Date()
     }
 }
