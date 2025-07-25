@@ -3,6 +3,8 @@ import Combine
 import SwiftUI
 import AVFoundation // Import AVFoundation for NSSound
 import OSLog
+import CoreGraphics // For CGEventSource and CGEvent
+import ApplicationServices // For kCGEventMouseMoved and CGPostMouseEvent
 
 enum TimerMode: String {
     case working, onShortBreak, onLongBreak, paused
@@ -139,19 +141,17 @@ class BreakTimer: ObservableObject {
             start(); return
         }
         if currentMode == .paused {
-            
             return
         }
         if currentMode == .working {
             let currentIdleTime = idleMonitor.getIdleTime()
             if currentIdleTime > settings.idleThreshold {
                 if isVideoPlayingViaPmset() {
-                    Logger.log("BreakTimer: tick(): User is idle, but video is playing. Resetting idle timer.", type: .debug)
-                    idleMonitor.resetIdleTime()
+					idleMonitor.resetIdleTime()
+                    Logger.log("BreakTimer: tick(): User is idle, but video is playing, resetting idle timer.", type: .debug)
                 } else {
                     Logger.log("BreakTimer: tick(): User is idle and no video is playing, resetting work timer.", type: .debug)
                     startNextWorkInterval()
-                    return
                 }
             }
         }
@@ -211,19 +211,29 @@ class BreakTimer: ObservableObject {
 }
 
 class IdleTimeMonitor {
-    private var lastActivityTimestamp: Date
-
-    init() {
-        self.lastActivityTimestamp = Date()
-    }
-
     func getIdleTime() -> TimeInterval {
-        // This will return the time since our last recorded activity/reset
-        return Date().timeIntervalSince(lastActivityTimestamp)
+        let anyEventType = CGEventType(rawValue: ~0)!
+        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyEventType)
     }
-
-    func resetIdleTime() {
-        Logger.log("IdleTimeMonitor: resetIdleTime() called.", type: .debug)
-        lastActivityTimestamp = Date()
+    
+	func resetIdleTime() {
+        // Get the current mouse position
+        let currentMouseLocation = CGEvent(source: nil)?.location ?? CGPoint(x: 0, y: 0)
+ 
+        // Move the mouse by 1 pixel (e.g., right then back left, or just right)
+        // Moving it just by 1 pixel is often imperceptible to the user.
+        let newX = currentMouseLocation.x + 1
+        let newY = currentMouseLocation.y
+ 
+        // Create and post a mouse movement event
+        guard let event = CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: newX, y: newY), mouseButton: .left) else {
+            Logger.log("Error: Could not create mouse event.", type: .error)
+            return
+        }
+ 
+        // Post the event. This injects it into the system's event stream.
+        event.post(tap: .cghidEventTap)
+ 
+        Logger.log("Reset idle timer by simulating activity: Mouse moved to (\(newX), \(newY)).", type: .debug)
     }
 }

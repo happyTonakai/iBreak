@@ -1,12 +1,34 @@
 import SwiftUI
 import AVFoundation
+import ApplicationServices
 
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsManager
     @StateObject private var launchManager = LaunchAtLoginManager()
     @State private var showingResetAlert = false
-    
     @State private var settingsWindow: NSWindow?
+    
+    // Check and request accessibility permission if idle detection is enabled
+    private func checkAndRequestAccessibilityPermissionIfNeeded() {
+        // Only check if idle detection is enabled (threshold > 0)
+        if settings.idleThreshold > 0 {
+			Logger.log("Checking and requesting accessibility permission", type: .debug)
+            if !AccessibilityPermissionManager.shared.hasPermission() {
+                Logger.log("Accessibility permission not granted, requesting permission", type: .debug)
+                AccessibilityPermissionManager.shared.requestPermission { granted in
+                    if !granted {
+                        // If permission was not granted, we might want to disable idle detection
+                        // or show a warning to the user
+                        // For now, we'll just log it
+                        Logger.log("Accessibility permission not granted", type: .info)
+                    }
+                }
+            }
+			else {
+				Logger.log("Accessibility permission already granted", type: .debug)
+			}
+        }
+    }
 
     var body: some View {
         TabView {
@@ -61,6 +83,12 @@ struct SettingsView: View {
                     
                     Section(header: Text("Idle Detection").font(.headline)) {
                         CustomSlider(value: $settings.idleThreshold, steps: TimeIntervals.idleThresholdIntervals, label: "Reset timer after inactivity")
+                            .onAppear {
+                                checkAndRequestAccessibilityPermissionIfNeeded()
+                            }
+                            .onChange(of: settings.idleThreshold) { _, _ in
+                                checkAndRequestAccessibilityPermissionIfNeeded()
+                            }
                     }
                 }
                 
