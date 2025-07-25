@@ -69,6 +69,11 @@ struct MenuView: View {
 
             Divider()
 
+            // Display app version
+            Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
             Button("Quit iBreak") {
                 Logger.log("MenuView: Quit iBreak button tapped.", type: .debug)
                 NSApplication.shared.terminate(nil)
