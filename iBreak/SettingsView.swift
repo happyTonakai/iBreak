@@ -120,6 +120,16 @@ struct SettingsView: View {
         .onDisappear {
             settings.save()
         }
+        .background(
+            Button("") {
+                if let window = settingsWindow {
+                    window.close()
+                }
+                Logger.log("Esc pressed, close the setting window", type: .debug)
+            }
+            .keyboardShortcut(.escape, modifiers: [])
+            .opacity(0)
+        )
     }
 }
 
