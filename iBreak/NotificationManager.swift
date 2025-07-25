@@ -8,14 +8,14 @@ class NotificationManager {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("NOTIFICATION PERMISSION ERROR: \(error.localizedDescription)")
+                    Logger.log("NOTIFICATION PERMISSION ERROR: \(error.localizedDescription)", type: .error)
                     return
                 }
                 
                 if granted {
-                    print("Notification permission granted.")
+                    Logger.log("Notification permission granted.", type: .info)
                 } else {
-                    print("Notification permission denied.")
+                    Logger.log("Notification permission denied.", type: .info)
                 }
             }
         }
@@ -38,7 +38,7 @@ class NotificationManager {
         // Ensure we don't schedule a notification for the past
         let triggerTime = timeRemaining - notificationTime
         guard triggerTime > 0 else {
-            print("NotificationManager: Could not schedule notification: Trigger time (\(triggerTime)) is in the past.")
+            Logger.log("NotificationManager: Could not schedule notification: Trigger time (\(triggerTime)) is in the past.", type: .error)
             return
         }
 
@@ -48,9 +48,9 @@ class NotificationManager {
         UNUserNotificationCenter.current().add(request) { error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("NotificationManager: ERROR SCHEDULING NOTIFICATION: \(error.localizedDescription)")
+                    Logger.log("NotificationManager: ERROR SCHEDULING NOTIFICATION: \(error.localizedDescription)", type: .error)
                 } else {
-                    print("NotificationManager: Notification scheduled successfully for \(breakType) break, will fire in \(Int(triggerTime)) seconds.")
+                    Logger.log("NotificationManager: Notification scheduled successfully for \(breakType) break, will fire in \(Int(triggerTime)) seconds.", type: .info)
                 }
             }
         }
@@ -58,6 +58,6 @@ class NotificationManager {
 
     func cancelNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        print("NotificationManager: All pending notifications cancelled.")
+        Logger.log("NotificationManager: All pending notifications cancelled.", type: .info)
     }
 }

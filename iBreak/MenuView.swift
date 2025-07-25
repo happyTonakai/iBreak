@@ -1,4 +1,5 @@
 import SwiftUI
+import OSLog
 
 struct MenuView: View {
     @EnvironmentObject var breakTimer: BreakTimer
@@ -15,7 +16,7 @@ struct MenuView: View {
             Divider()
 
             Button("Settings...") {
-                print("MenuView: Settings button tapped.")
+                Logger.log("MenuView: Settings button tapped.", type: .debug)
                 openWindow(id: "settings-window")
             }
             .keyboardShortcut(",", modifiers: .command)
@@ -24,13 +25,13 @@ struct MenuView: View {
 
             if !breakTimer.isRunning && breakTimer.currentMode != .paused {
                  Button("Start Timer") {
-                     print("MenuView: Start Timer button tapped.")
+                     Logger.log("MenuView: Start Timer button tapped.", type: .debug)
                      breakTimer.start()
                  }
             }
             
             Button("Skip to Break") {
-                print("MenuView: Skip to Break button tapped.")
+                Logger.log("MenuView: Skip to Break button tapped.", type: .debug)
                 breakTimer.transitionToNextState()
             }
             
@@ -38,30 +39,30 @@ struct MenuView: View {
             
             Text("Pause for...").font(.caption).foregroundColor(.secondary)
             Button("30 minutes") {
-                print("MenuView: Pause for 30 minutes tapped.")
+                Logger.log("MenuView: Pause for 30 minutes tapped.", type: .debug)
                 breakTimer.pause(for: .thirtyMinutes)
             }
             Button("1 hour") {
-                print("MenuView: Pause for 1 hour tapped.")
+                Logger.log("MenuView: Pause for 1 hour tapped.", type: .debug)
                 breakTimer.pause(for: .oneHour)
             }
             Button("2 hours") {
-                print("MenuView: Pause for 2 hours tapped.")
+                Logger.log("MenuView: Pause for 2 hours tapped.", type: .debug)
                 breakTimer.pause(for: .twoHours)
             }
             Button("Until tomorrow morning") {
-                print("MenuView: Pause until tomorrow morning tapped.")
+                Logger.log("MenuView: Pause until tomorrow morning tapped.", type: .debug)
                 breakTimer.pause(for: .untilMorning)
             }
             Button("Indefinitely") {
-                print("MenuView: Pause indefinitely tapped.")
+                Logger.log("MenuView: Pause indefinitely tapped.", type: .debug)
                 breakTimer.pause(for: .indefinitely)
             }
             
             if breakTimer.currentMode == .paused {
                 Divider()
                 Button("Resume Timer") {
-                    print("MenuView: Resume Timer button tapped.")
+                    Logger.log("MenuView: Resume Timer button tapped.", type: .debug)
                     breakTimer.start()
                 }
             }
@@ -69,7 +70,7 @@ struct MenuView: View {
             Divider()
 
             Button("Quit iBreak") {
-                print("MenuView: Quit iBreak button tapped.")
+                Logger.log("MenuView: Quit iBreak button tapped.", type: .debug)
                 NSApplication.shared.terminate(nil)
             }
             .keyboardShortcut("q", modifiers: .command)

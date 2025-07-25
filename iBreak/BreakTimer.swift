@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 import AVFoundation // Import AVFoundation for NSSound
+import OSLog
 
 enum TimerMode: String {
     case working, onShortBreak, onLongBreak, paused
@@ -24,12 +25,12 @@ class BreakTimer: ObservableObject {
     private var pausedUntil: Date?
 
     init() {
-        print("BreakTimer: init() called.")
+        Logger.log("BreakTimer: init() called.", type: .debug)
         start()
     }
 
     func start() {
-        print("BreakTimer: start() called. isRunning: \(isRunning), currentMode: \(currentMode)")
+        Logger.log("BreakTimer: start() called. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
         NotificationManager.shared.cancelNotifications() // Clear any old notifications
         
         // No guard here. Always attempt to start/resume.
@@ -42,21 +43,21 @@ class BreakTimer: ObservableObject {
             startNextWorkInterval()
         }
         startInternalTimer()
-        print("BreakTimer: start() finished. isRunning: \(isRunning), currentMode: \(currentMode)")
+        Logger.log("BreakTimer: start() finished. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
     }
 
     func stop() {
-        print("BreakTimer: stop() called. isRunning: \(isRunning), currentMode: \(currentMode)")
+        Logger.log("BreakTimer: stop() called. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
         isRunning = false
         targetDate = nil
         timer?.cancel()
         // When stopped, explicitly set mode to working, ready for a fresh start.
         currentMode = .working
-        print("BreakTimer: stop() finished.")
+        Logger.log("BreakTimer: stop() finished.", type: .debug)
     }
     
     func pause(for duration: PauseDuration) {
-        print("BreakTimer: pause(for: \(duration)) called. currentMode: \(currentMode)")
+        Logger.log("BreakTimer: pause(for: \(duration)) called. currentMode: \(currentMode)", type: .debug)
         NotificationManager.shared.cancelNotifications()
         stop()
         currentMode = .paused
@@ -73,11 +74,11 @@ class BreakTimer: ObservableObject {
         case .indefinitely:
             pausedUntil = nil // No resume time
         }
-        print("BreakTimer: pause() finished. currentMode: \(currentMode)")
+        Logger.log("BreakTimer: pause() finished. currentMode: \(currentMode)", type: .debug)
     }
 
     func transitionToNextState() {
-        print("BreakTimer: transitionToNextState() called. currentMode: \(currentMode)")
+        Logger.log("BreakTimer: transitionToNextState() called. currentMode: \(currentMode)", type: .debug)
         let previousMode = currentMode // Capture current mode before changing
         switch currentMode {
         case .working: startNextBreak()
@@ -86,30 +87,30 @@ class BreakTimer: ObservableObject {
         // Play sound only if transitioning from a break/paused state to working
         if previousMode != .working && currentMode == .working {
             NSSound(named: settings.soundName)?.play()
-            print("BreakTimer: Playing end of break sound.")
+            Logger.log("BreakTimer: Playing end of break sound.", type: .info)
         }
-        print("BreakTimer: transitionToNextState() finished. currentMode: \(currentMode)")
+        Logger.log("BreakTimer: transitionToNextState() finished. currentMode: \(currentMode)", type: .debug)
     }
     
     func skipBreak() {
-        print("BreakTimer: skipBreak() called. currentMode: \(currentMode)")
+        Logger.log("BreakTimer: skipBreak() called. currentMode: \(currentMode)", type: .debug)
         NotificationManager.shared.cancelNotifications()
         if currentMode == .onShortBreak || currentMode == .onLongBreak { startNextWorkInterval() }
-        print("BreakTimer: skipBreak() finished.")
+        Logger.log("BreakTimer: skipBreak() finished.", type: .debug)
     }
 
     private func startNextWorkInterval() {
-        print("BreakTimer: startNextWorkInterval() called. workCycle: \(workCycle)")
+        Logger.log("BreakTimer: startNextWorkInterval() called. workCycle: \(workCycle)", type: .debug)
         workCycle = (workCycle + 1) % 2
         currentMode = .working
         let duration = (workCycle == 1) ? settings.shortBreakInterval : settings.longBreakInterval
         targetDate = Date().addingTimeInterval(duration)
         scheduleNotification(duration: duration)
-        print("BreakTimer: startNextWorkInterval() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))")
+        Logger.log("BreakTimer: startNextWorkInterval() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))", type: .debug)
     }
 
     private func startNextBreak() {
-        print("BreakTimer: startNextBreak() called. workCycle: \(workCycle)")
+        Logger.log("BreakTimer: startNextBreak() called. workCycle: \(workCycle)", type: .debug)
         let duration: TimeInterval
         if workCycle == 1 {
             currentMode = .onShortBreak
@@ -119,30 +120,30 @@ class BreakTimer: ObservableObject {
             duration = settings.longBreakDuration
         }
         targetDate = Date().addingTimeInterval(duration)
-        print("BreakTimer: startNextBreak() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))")
+        Logger.log("BreakTimer: startNextBreak() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))", type: .debug)
     }
 
     private func startInternalTimer() {
-        print("BreakTimer: startInternalTimer() called.")
+        Logger.log("BreakTimer: startInternalTimer() called.", type: .debug)
         timer?.cancel()
         isRunning = true
         timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect().sink { [weak self] _ in self?.tick() }
-        print("BreakTimer: startInternalTimer() finished.")
+        Logger.log("BreakTimer: startInternalTimer() finished.", type: .debug)
     }
 
     private func tick() {
-        // print("BreakTimer: tick() called. isRunning: \(isRunning), currentMode: \(currentMode)") // Too verbose
+        
         guard isRunning else { return }
         if let pausedUntil = pausedUntil, Date() >= pausedUntil {
-            print("BreakTimer: tick(): Paused until time reached. Calling start().")
+            Logger.log("BreakTimer: tick(): Paused until time reached. Calling start().", type: .debug)
             start(); return
         }
         if currentMode == .paused {
-            // print("BreakTimer: tick(): In paused mode, not ticking down.") // Too verbose
+            
             return
         }
         if idleMonitor.getIdleTime() > settings.idleThreshold && currentMode == .working {
-            print("BreakTimer: tick(): User is idle, resetting work timer.")
+            Logger.log("BreakTimer: tick(): User is idle, resetting work timer.", type: .debug)
             startNextWorkInterval()
             return
         }
@@ -154,17 +155,17 @@ class BreakTimer: ObservableObject {
                 let seconds = Int(remaining) % 60
                 timeRemainingFormatted = String(format: "%02d:%02d", minutes, seconds)
             } else {
-                print("BreakTimer: tick(): Target date reached. Transitioning state.")
+                Logger.log("BreakTimer: tick(): Target date reached. Transitioning state.", type: .debug)
                 transitionToNextState()
             }
         }
     }
 
     private func scheduleNotification(duration: TimeInterval) {
-        print("BreakTimer: scheduleNotification() called. duration: \(duration)")
+        Logger.log("BreakTimer: scheduleNotification() called. duration: \(duration)", type: .debug)
         NotificationManager.shared.cancelNotifications()
         guard settings.areNotificationsEnabled, currentMode == .working else { 
-            print("BreakTimer: scheduleNotification() guard: Notifications not enabled or not in working mode.")
+            Logger.log("BreakTimer: scheduleNotification() guard: Notifications not enabled or not in working mode.", type: .debug)
             return
         }
         let isShortBreakNext = workCycle == 1
@@ -172,9 +173,9 @@ class BreakTimer: ObservableObject {
         let breakType = isShortBreakNext ? "short" : "long"
         if duration > notificationTime {
             NotificationManager.shared.scheduleNotification(timeRemaining: duration, breakType: breakType)
-            print("BreakTimer: Notification scheduled for \(breakType) break in \(Int(duration - notificationTime)) seconds.")
+            Logger.log("BreakTimer: Notification scheduled for \(breakType) break in \(Int(duration - notificationTime)) seconds.", type: .info)
         } else {
-            print("BreakTimer: Notification not scheduled: duration (\(duration)) <= notificationTime (\(notificationTime)).")
+            Logger.log("BreakTimer: Notification not scheduled: duration (\(duration)) <= notificationTime (\(notificationTime)).", type: .info)
         }
     }
 }
