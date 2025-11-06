@@ -5,7 +5,7 @@ import UserNotifications
 struct iBreakApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
-    @StateObject private var breakTimer = BreakTimer()
+    @StateObject private var breakTimer = BreakTimer.shared
     @StateObject private var settings = SettingsManager.shared
     private let breakWindowManager = BreakWindowManager()
     private let notificationDelegate = NotificationDelegate()

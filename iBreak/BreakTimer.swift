@@ -15,6 +15,8 @@ enum PauseDuration: TimeInterval {
 }
 
 class BreakTimer: ObservableObject {
+    static let shared = BreakTimer()
+    
     @Published var timeRemainingFormatted: String = "00:00"
     @Published var isRunning = false
     @Published var currentMode: TimerMode = .working
@@ -26,12 +28,12 @@ class BreakTimer: ObservableObject {
     private var timer: AnyCancellable?
     private var pausedUntil: Date?
 
-    init() {
+    private init() {
         Logger.log("BreakTimer: init() called.", type: .debug)
-        start()
+        start(reset: true)
     }
 
-    func start() {
+    func start(reset: Bool = false) {
         Logger.log("BreakTimer: start() called. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
         NotificationManager.shared.cancelNotifications() // Clear any old notifications
         
@@ -42,7 +44,7 @@ class BreakTimer: ObservableObject {
         // If we were paused, or just starting, set to working mode and start a new work interval.
         if currentMode == .paused || targetDate == nil {
             currentMode = .working
-            startNextWorkInterval()
+            startNextWorkInterval(reset: reset)
         }
         startInternalTimer()
         Logger.log("BreakTimer: start() finished. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
@@ -143,7 +145,7 @@ class BreakTimer: ObservableObject {
         guard isRunning else { return }
         if let pausedUntil = pausedUntil, Date() >= pausedUntil {
             Logger.log("BreakTimer: tick(): Paused until time reached. Calling start().", type: .debug)
-            start(); return
+            start(reset: false); return
         }
         if currentMode == .paused {
             return

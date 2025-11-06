@@ -9,6 +9,7 @@ iBreak is a macOS application built with SwiftUI that implements the Pomodoro Te
 - **Customizable Intervals**: Configurable work sessions, short breaks, and long breaks
 - **Break Enforcement**: Full-screen break windows that prevent work during breaks
 - **Smart Idle Detection**: Pauses timer when user is idle, with video playback detection
+- **Screen Lock Detection**: Automatically stops timer when screen is locked and resets when unlocked
 - **Notifications**: System notifications before breaks
 - **Themes**: Multiple visual themes for break screens
 - **Sound Alerts**: Audio notifications for break transitions

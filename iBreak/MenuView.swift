@@ -26,7 +26,7 @@ struct MenuView: View {
             if !breakTimer.isRunning && breakTimer.currentMode != .paused {
                  Button("Start Timer") {
                      Logger.log("MenuView: Start Timer button tapped.", type: .debug)
-                     breakTimer.start()
+                     breakTimer.start(reset: true)
                  }
             }
             
@@ -63,7 +63,7 @@ struct MenuView: View {
                 Divider()
                 Button("Resume Timer") {
                     Logger.log("MenuView: Resume Timer button tapped.", type: .debug)
-                    breakTimer.start()
+                    breakTimer.start(reset: false)
                 }
             }
 

@@ -6,7 +6,7 @@ struct Logger {
 
     static let app = OSLog(subsystem: subsystem, category: "iBreak")
 
-    static func log(_ message: String, type: OSLogType = .debug) {
+    static func log(_ message: String, type: OSLogType = .default) {
         os_log(type, log: app, "%{public}@", message)
     }
 }
