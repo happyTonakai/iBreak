@@ -11,11 +11,22 @@ class BreakWindowManager {
             let hostingController = NSHostingController(rootView: breakView)
             let window = NSWindow(contentViewController: hostingController)
 
-            window.styleMask = [.borderless]
-            window.level = .floating
-            window.setFrame(screen.frame, display: true)
+            // Configure window to cover the entire screen
+            window.styleMask = [.borderless, .fullSizeContentView]
+            window.level = .screenSaver
+            window.backgroundColor = NSColor.clear
+            window.isOpaque = false
+            window.hasShadow = false
+            window.ignoresMouseEvents = false
+            
+            // Set window frame to match screen exactly
+            window.setFrame(screen.visibleFrame, display: false)
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            
+            // Make the window visible and bring it to front
             window.makeKeyAndOrderFront(nil)
-
+            window.orderFrontRegardless()
+            
             breakWindows.append(window)
         }
     }

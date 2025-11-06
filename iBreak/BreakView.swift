@@ -66,13 +66,6 @@ struct BreakView: View {
 
     private func setupView() {
         currentMessage = breakMessages.randomElement() ?? "Time for a break!"
-        
-        if let window = NSApplication.shared.windows.last {
-            window.level = .floating
-            window.styleMask = [.borderless]
-            window.setFrame(NSScreen.main?.frame ?? .zero, display: true)
-            window.makeKeyAndOrderFront(nil)
-        }
         // Removed: NSSound(named: settings.soundName)?.play()
     }
 }
