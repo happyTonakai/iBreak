@@ -7,6 +7,7 @@ struct iBreakApp: App {
     
     @StateObject private var breakTimer = BreakTimer.shared
     @StateObject private var settings = SettingsManager.shared
+    @StateObject private var keyMonitor = GlobalKeyMonitor.shared
     private let breakWindowManager = BreakWindowManager()
     private let notificationDelegate = NotificationDelegate()
 
@@ -41,8 +42,10 @@ struct iBreakApp: App {
         .menuBarExtraStyle(.menu)
         .onChange(of: breakTimer.currentMode) { _, newMode in
             if newMode == .onShortBreak || newMode == .onLongBreak {
+                keyMonitor.startMonitoring()
                 breakWindowManager.showBreakWindows(with: breakTimer)
             } else {
+                keyMonitor.stopMonitoring()
                 breakWindowManager.hideBreakWindows()
             }
         }
