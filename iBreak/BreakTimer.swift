@@ -50,14 +50,16 @@ class BreakTimer: ObservableObject {
         Logger.log("BreakTimer: start() finished. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
     }
 
-    func stop() {
-        Logger.log("BreakTimer: stop() called. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
+    func stop(preserveState: Bool = false) {
+        Logger.log("BreakTimer: stop() called. isRunning: \(isRunning), currentMode: \(currentMode), preserveState: \(preserveState)", type: .debug)
         isRunning = false
         targetDate = nil
         timer?.cancel()
-        // When stopped, explicitly set mode to working, ready for a fresh start.
-        currentMode = .working
-        Logger.log("BreakTimer: stop() finished.", type: .debug)
+        // When stopped, explicitly set mode to working, ready for a fresh start, unless preserving state
+        if !preserveState {
+            currentMode = .working
+        }
+        Logger.log("BreakTimer: stop() finished. currentMode: \(currentMode)", type: .debug)
     }
     
     func isPaused() -> Bool {
@@ -139,21 +141,33 @@ class BreakTimer: ObservableObject {
     func startInternalTimer() {
         Logger.log("BreakTimer: startInternalTimer() called.", type: .debug)
         timer?.cancel()
-        isRunning = true
+        // Only set isRunning to true if not in paused mode
+        if currentMode != .paused {
+            isRunning = true
+        }
         timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect().sink { [weak self] _ in self?.tick() }
-        Logger.log("BreakTimer: startInternalTimer() finished.", type: .debug)
+        Logger.log("BreakTimer: startInternalTimer() finished. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
     }
 
     private func tick() {
-        
-        guard isRunning else { return }
+        // Always check pause state first, even if not running
         if let pausedUntil = pausedUntil, Date() >= pausedUntil {
             Logger.log("BreakTimer: tick(): Paused until time reached. Calling start().", type: .debug)
             start(reset: false); return
         }
+        
+        // Check if paused
         if currentMode == .paused {
+            // Ensure isRunning is false when paused to maintain consistency
+            if isRunning {
+                Logger.log("BreakTimer: tick(): Detected inconsistent state - isRunning=true while paused. Fixing.", type: .error)
+                isRunning = false
+            }
             return
         }
+        
+        // Only proceed with timer logic if running
+        guard isRunning else { return }
         if currentMode == .working {
             let currentIdleTime = idleMonitor.getIdleTime()
             if currentIdleTime > settings.idleThreshold {
