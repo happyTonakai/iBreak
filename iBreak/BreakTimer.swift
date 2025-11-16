@@ -60,6 +60,10 @@ class BreakTimer: ObservableObject {
         Logger.log("BreakTimer: stop() finished.", type: .debug)
     }
     
+    func isPaused() -> Bool {
+        return currentMode == .paused
+    }
+    
     func pause(for duration: PauseDuration) {
         Logger.log("BreakTimer: pause(for: \(duration)) called. currentMode: \(currentMode)", type: .debug)
         NotificationManager.shared.cancelNotifications()
@@ -132,7 +136,7 @@ class BreakTimer: ObservableObject {
         Logger.log("BreakTimer: startNextBreak() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))", type: .debug)
     }
 
-    private func startInternalTimer() {
+    func startInternalTimer() {
         Logger.log("BreakTimer: startInternalTimer() called.", type: .debug)
         timer?.cancel()
         isRunning = true

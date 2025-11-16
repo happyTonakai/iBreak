@@ -7,6 +7,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         screenLockObserver = ScreenLockObserver()
+        
+        // Hide the app icon from the dock
+        NSApp.setActivationPolicy(.accessory)
     }
     
     // This function is automatically called by the system just before the app quits.
