@@ -27,7 +27,8 @@ class ScreenLockObserver {
 
     @objc private func screenIsLocked() {
         Logger.log("Screen is locked. Stopping timer.", type: .info)
-        BreakTimer.shared.stop()
+        // Preserve the current state (including paused state) when screen is locked
+        BreakTimer.shared.stop(preserveState: true)
     }
 
     @objc private func screenIsUnlocked() {
@@ -40,6 +41,7 @@ class ScreenLockObserver {
             BreakTimer.shared.startInternalTimer()
         } else {
             Logger.log("Timer is not paused, resetting timer after screen unlock.", type: .info)
+            // Only reset if the timer was actually running before screen lock
             BreakTimer.shared.start(reset: true)
         }
     }

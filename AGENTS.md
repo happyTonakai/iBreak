@@ -157,6 +157,26 @@ xcodebuild archive -project iBreak.xcodeproj -scheme iBreak -archivePath ./build
 3. Verify idle detection behavior
 4. Test notification scheduling
 
+### Version Management
+The iBreak app uses two version numbers:
+- **MARKETING_VERSION**: The user-facing version number (e.g., 1.4, 1.5)
+- **CURRENT_PROJECT_VERSION**: The build version number (e.g., 1, 2, 3)
+
+#### How to Update Version Numbers
+1. Edit `iBreak.xcodeproj/project.pbxproj`
+2. Find and update `MARKETING_VERSION` for both Debug and Release configurations
+3. Find and update `CURRENT_PROJECT_VERSION` for both Debug and Release configurations
+4. Both values need to be updated in two places (Debug and Release sections)
+5. Rebuild the project to apply changes
+
+Example changes:
+```
+MARKETING_VERSION = 1.4; → MARKETING_VERSION = 1.5;
+CURRENT_PROJECT_VERSION = 1; → CURRENT_PROJECT_VERSION = 2;
+```
+
+The version is displayed in the app menu at `MenuView.swift` line 73.
+
 ## Deployment Notes
 
 ### Code Signing

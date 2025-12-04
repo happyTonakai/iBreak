@@ -20,6 +20,16 @@ class GlobalKeyMonitor: ObservableObject {
         // Always start local monitoring (works when app is focused, no permissions needed)
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handleKeyEvent(event)
+            
+            // If this is an ESC key and we're on a break, consume the event
+            // to prevent it from being passed to other applications
+            if event.keyCode == 53 {
+                let timer = BreakTimer.shared
+                if timer.currentMode == .onShortBreak || timer.currentMode == .onLongBreak {
+                    return nil // Consume the ESC event
+                }
+            }
+            
             return event // Return the event to let it continue processing
         }
         

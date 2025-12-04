@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Hide the app icon from the dock
         NSApp.setActivationPolicy(.accessory)
+        Logger.log("App activation policy set to accessory (hidden from dock)", type: .info)
     }
     
     // This function is automatically called by the system just before the app quits.
