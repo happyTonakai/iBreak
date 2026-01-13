@@ -21,12 +21,12 @@ class GlobalKeyMonitor: ObservableObject {
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handleKeyEvent(event)
             
-            // If this is an ESC key and we're on a break, consume the event
+            // If this is a Backspace key and we're on a break, consume the event
             // to prevent it from being passed to other applications
-            if event.keyCode == 53 {
+            if event.keyCode == 51 {
                 let timer = BreakTimer.shared
                 if timer.currentMode == .onShortBreak || timer.currentMode == .onLongBreak {
-                    return nil // Consume the ESC event
+                    return nil // Consume the Backspace event
                 }
             }
             
@@ -69,20 +69,20 @@ class GlobalKeyMonitor: ObservableObject {
     private func handleKeyEvent(_ event: NSEvent) {
         // Log all key events for debugging (only in debug mode)
         Logger.log("GlobalKeyMonitor: Key pressed - keyCode: \(event.keyCode), characters: \(event.characters ?? "none")", type: .debug)
-        
-        // Check if the key pressed is ESC (keyCode 53 on macOS)
-        if event.keyCode == 53 {
-            Logger.log("GlobalKeyMonitor: ESC key detected!", type: .info)
-            
+
+        // Check if the key pressed is Backspace (keyCode 51 on macOS)
+        if event.keyCode == 51 {
+            Logger.log("GlobalKeyMonitor: Backspace key detected!", type: .info)
+
             // Check if we're currently on a break
             let timer = BreakTimer.shared
             Logger.log("GlobalKeyMonitor: Current timer mode: \(timer.currentMode.rawValue)", type: .debug)
-            
+
             if timer.currentMode == .onShortBreak || timer.currentMode == .onLongBreak {
-                Logger.log("GlobalKeyMonitor: Cancelling break due to ESC key", type: .info)
+                Logger.log("GlobalKeyMonitor: Cancelling break due to Backspace key", type: .info)
                 timer.skipBreak()
             } else {
-                Logger.log("GlobalKeyMonitor: Not on break, ignoring ESC key", type: .debug)
+                Logger.log("GlobalKeyMonitor: Not on break, ignoring Backspace key", type: .debug)
             }
         }
     }
