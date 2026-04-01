@@ -206,7 +206,9 @@ class MenuBarManager: NSObject {
 
     @objc private func openSettings() {
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.showSettingsWindow()
+        }
     }
 
     @objc private func startTimer() {

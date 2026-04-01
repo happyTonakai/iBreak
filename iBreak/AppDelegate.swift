@@ -22,4 +22,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // We simply call our existing cancel function.
         NotificationManager.shared.cancelNotifications()
     }
+    
+    @objc func showSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        // Find the settings window by title and show it
+        if let settingsWindow = NSApp.windows.first(where: { $0.title == "iBreak Settings" }) {
+            settingsWindow.makeKeyAndOrderFront(nil)
+        }
+    }
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
 }
