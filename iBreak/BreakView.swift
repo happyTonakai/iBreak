@@ -43,7 +43,7 @@ struct BreakView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if !settings.isStrictModeEnabled {
+            if !settings.isStrictModeEnabled && !settings.isForcedEndOfWorkModeEnabled {
                 Button(action: {
                     breakTimer.skipBreak()
                     dismiss()

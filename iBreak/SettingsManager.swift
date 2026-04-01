@@ -15,6 +15,8 @@ class SettingsManager: ObservableObject {
         static let isStrictModeEnabled = "isStrictModeEnabled"
         static let areNotificationsEnabled = "areNotificationsEnabled"
         static let showMenuBarIcon = "showMenuBarIcon"
+        static let isForcedEndOfWorkModeEnabled = "isForcedEndOfWorkModeEnabled"
+        static let forcedEndOfWorkTime = "forcedEndOfWorkTime"
     }
 
     private let defaults: [String: Any] = [
@@ -27,7 +29,9 @@ class SettingsManager: ObservableObject {
         Keys.idleThreshold: 5 * 60,
         Keys.isStrictModeEnabled: false,
         Keys.areNotificationsEnabled: true,
-        Keys.showMenuBarIcon: true
+        Keys.showMenuBarIcon: true,
+        Keys.isForcedEndOfWorkModeEnabled: false,
+        Keys.forcedEndOfWorkTime: 18 * 3600 // Default 18:00 (6 PM) in seconds from midnight
     ]
 
     @Published var shortBreakInterval: TimeInterval
@@ -40,6 +44,8 @@ class SettingsManager: ObservableObject {
     @Published var isStrictModeEnabled: Bool
     @Published var areNotificationsEnabled: Bool
     @Published var showMenuBarIcon: Bool
+    @Published var isForcedEndOfWorkModeEnabled: Bool
+    @Published var forcedEndOfWorkTime: TimeInterval
 
     private init() {
         UserDefaults.standard.register(defaults: defaults)
@@ -54,6 +60,8 @@ class SettingsManager: ObservableObject {
         isStrictModeEnabled = UserDefaults.standard.bool(forKey: Keys.isStrictModeEnabled)
         areNotificationsEnabled = UserDefaults.standard.bool(forKey: Keys.areNotificationsEnabled)
         showMenuBarIcon = UserDefaults.standard.bool(forKey: Keys.showMenuBarIcon)
+        isForcedEndOfWorkModeEnabled = UserDefaults.standard.bool(forKey: Keys.isForcedEndOfWorkModeEnabled)
+        forcedEndOfWorkTime = UserDefaults.standard.double(forKey: Keys.forcedEndOfWorkTime)
     }
 
     func save() {
@@ -67,6 +75,8 @@ class SettingsManager: ObservableObject {
         UserDefaults.standard.set(isStrictModeEnabled, forKey: Keys.isStrictModeEnabled)
         UserDefaults.standard.set(areNotificationsEnabled, forKey: Keys.areNotificationsEnabled)
         UserDefaults.standard.set(showMenuBarIcon, forKey: Keys.showMenuBarIcon)
+        UserDefaults.standard.set(isForcedEndOfWorkModeEnabled, forKey: Keys.isForcedEndOfWorkModeEnabled)
+        UserDefaults.standard.set(forcedEndOfWorkTime, forKey: Keys.forcedEndOfWorkTime)
     }
 
     func resetToDefaults() {
@@ -80,6 +90,8 @@ class SettingsManager: ObservableObject {
         isStrictModeEnabled = defaults[Keys.isStrictModeEnabled] as! Bool
         areNotificationsEnabled = defaults[Keys.areNotificationsEnabled] as! Bool
         showMenuBarIcon = defaults[Keys.showMenuBarIcon] as! Bool
+        isForcedEndOfWorkModeEnabled = defaults[Keys.isForcedEndOfWorkModeEnabled] as! Bool
+        forcedEndOfWorkTime = defaults[Keys.forcedEndOfWorkTime] as! TimeInterval
         save()
     }
 }

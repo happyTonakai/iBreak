@@ -105,8 +105,71 @@ class BreakTimer: ObservableObject {
     func skipBreak() {
         Logger.log("BreakTimer: skipBreak() called. currentMode: \(currentMode)", type: .debug)
         NotificationManager.shared.cancelNotifications()
+        
+        // Check if forced end of work mode is active
+        if isForcedEndOfWorkModeActive() {
+            Logger.log("BreakTimer: skipBreak() blocked - forced end of work mode is active.", type: .info)
+            return
+        }
+        
         if currentMode == .onShortBreak || currentMode == .onLongBreak { startNextWorkInterval() }
         Logger.log("BreakTimer: skipBreak() finished.", type: .debug)
+    }
+    
+    private func isForcedEndOfWorkModeActive() -> Bool {
+        guard settings.isForcedEndOfWorkModeEnabled else { return false }
+        
+        let now = Date()
+        let calendar = Calendar.current
+        let currentTimeInSeconds = TimeInterval(calendar.component(.hour, from: now) * 3600 + calendar.component(.minute, from: now) * 60)
+        
+        let forcedTime = settings.forcedEndOfWorkTime
+        let eightAMThreshold: TimeInterval = 8 * 3600 // 8 AM in seconds
+        
+        // If forced time is before 8 AM (e.g., 23:00), check if we're after forced time today OR before 8 AM tomorrow
+        if forcedTime < eightAMThreshold {
+            // Example: forced at 23:00, now is 00:30 -> active
+            // Example: forced at 23:00, now is 10:00 -> not active
+            if currentTimeInSeconds >= forcedTime || currentTimeInSeconds < eightAMThreshold {
+                return true
+            }
+        } else {
+            // Example: forced at 18:00, now is 19:00 -> active
+            // Example: forced at 18:00, now is 07:00 -> active (still before 8 AM from yesterday's setting)
+            // Example: forced at 18:00, now is 09:00 -> not active
+            if currentTimeInSeconds >= forcedTime || currentTimeInSeconds < eightAMThreshold {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    private func shouldStartForcedBreak() -> Bool {
+        guard settings.isForcedEndOfWorkModeEnabled else { return false }
+        guard currentMode == .working || currentMode == .paused else { return false }
+        
+        let now = Date()
+        let calendar = Calendar.current
+        let currentTimeInSeconds = TimeInterval(calendar.component(.hour, from: now) * 3600 + calendar.component(.minute, from: now) * 60)
+        
+        let forcedTime = settings.forcedEndOfWorkTime
+        let eightAMThreshold: TimeInterval = 8 * 3600 // 8 AM in seconds
+        
+        // Check if we should activate forced break mode
+        if forcedTime < eightAMThreshold {
+            // Late night forced time (e.g., 23:00)
+            if currentTimeInSeconds >= forcedTime || currentTimeInSeconds < eightAMThreshold {
+                return true
+            }
+        } else {
+            // Normal forced time (e.g., 18:00)
+            if currentTimeInSeconds >= forcedTime || currentTimeInSeconds < eightAMThreshold {
+                return true
+            }
+        }
+        
+        return false
     }
 
     private func startNextWorkInterval(reset: Bool = false) {
@@ -137,6 +200,30 @@ class BreakTimer: ObservableObject {
         targetDate = Date().addingTimeInterval(duration)
         Logger.log("BreakTimer: startNextBreak() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))", type: .debug)
     }
+    
+    private func startForcedBreak() {
+        Logger.log("BreakTimer: startForcedBreak() called.", type: .info)
+        NotificationManager.shared.cancelNotifications()
+        
+        // Determine how long until 8 AM
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 8
+        components.minute = 0
+        var eightAM = calendar.date(from: components)!
+        
+        // If 8 AM has already passed today, use tomorrow's 8 AM
+        if Date() >= eightAM {
+            components.day! += 1
+            eightAM = calendar.date(from: components)!
+        }
+        
+        let duration = eightAM.timeIntervalSinceNow
+        currentMode = .onLongBreak
+        targetDate = eightAM
+        
+        Logger.log("BreakTimer: startForcedBreak() finished. Forced break until \(eightAM), duration: \(duration) seconds", type: .info)
+    }
 
     func startInternalTimer() {
         Logger.log("BreakTimer: startInternalTimer() called.", type: .debug)
@@ -166,26 +253,30 @@ class BreakTimer: ObservableObject {
             return
         }
         
+        // Check if forced end of work mode should start
+        if shouldStartForcedBreak() {
+            Logger.log("BreakTimer: tick(): Forced end of work mode activated. Starting forced break.", type: .info)
+            startForcedBreak()
+            return
+        }
+        
         // Only proceed with timer logic if running
         guard isRunning else { return }
         if currentMode == .working {
             let currentIdleTime = idleMonitor.getIdleTime()
             if currentIdleTime > settings.idleThreshold {
-                if isVideoPlayingViaPmset() {
-					idleMonitor.resetIdleTime()
-                    Logger.log("BreakTimer: tick(): User is idle, but video is playing, resetting idle timer.", type: .debug)
-                } else {
-                    Logger.log("BreakTimer: tick(): User is idle and no video is playing, resetting work timer.", type: .debug)
-                    startNextWorkInterval(reset: true)
-                }
+                Logger.log("BreakTimer: tick(): User is idle, resetting work timer.", type: .debug)
+                NotificationManager.shared.cancelNotifications()
+                startNextWorkInterval(reset: true)
             }
         }
         if let targetDate = targetDate {
             let remaining = max(0, targetDate.timeIntervalSinceNow)
             if remaining > 0 {
                 // Update timeRemainingFormatted for UI display
-                let minutes = Int(remaining) / 60
-                let seconds = Int(remaining) % 60
+                let rounded = Int(remaining.rounded(.down))
+                let minutes = rounded / 60
+                let seconds = rounded % 60
                 timeRemainingFormatted = String(format: "%02d:%02d", minutes, seconds)
             } else {
                 Logger.log("BreakTimer: tick(): Target date reached. Transitioning state.", type: .debug)
@@ -237,8 +328,9 @@ class BreakTimer: ObservableObject {
 
 class IdleTimeMonitor {
     func getIdleTime() -> TimeInterval {
-        let anyEventType = CGEventType(rawValue: ~0)!
-        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyEventType)
+        let mouseIdle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .mouseMoved)
+        let keyIdle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .keyDown)
+        return min(mouseIdle, keyIdle)
     }
     
 	func resetIdleTime() {

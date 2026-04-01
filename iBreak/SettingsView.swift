@@ -81,6 +81,14 @@ struct SettingsView: View {
                     }
                     .padding(.bottom)
                     
+                    Section(header: Text("Forced End of Work Mode").font(.headline)) {
+                        Toggle(isOn: $settings.isForcedEndOfWorkModeEnabled) { Text("Enable forced end of work mode") }
+                        if settings.isForcedEndOfWorkModeEnabled {
+                            ForcedEndOfWorkTimePicker(selectedTime: $settings.forcedEndOfWorkTime)
+                        }
+                    }
+                    .padding(.bottom)
+                    
                     Section(header: Text("Idle Detection").font(.headline)) {
                         CustomSlider(value: $settings.idleThreshold, steps: TimeIntervals.idleThresholdIntervals, label: "Reset timer after inactivity")
                             .onAppear {
@@ -110,7 +118,7 @@ struct SettingsView: View {
         .onChange(of: settingsWindow) { _, newWindow in
             if let window = newWindow {
                 window.isRestorable = false
-                window.setContentSize(NSSize(width: 450, height: 380))
+                window.setContentSize(NSSize(width: 450, height: 420))
             }
         }
         .alert(Text("Reset all settings to their default values?"), isPresented: $showingResetAlert) {
@@ -210,5 +218,42 @@ struct SoundPickerView: View {
         .onChange(of: selectedSoundName) { _, newSound in
             NSSound(named: newSound)?.play()
         }
+    }
+}
+
+struct ForcedEndOfWorkTimePicker: View {
+    @Binding var selectedTime: TimeInterval
+    
+    private var hours: Int {
+        Int(selectedTime) / 3600
+    }
+    
+    private var minutes: Int {
+        (Int(selectedTime) % 3600) / 60
+    }
+    
+    private var displayTime: String {
+        String(format: "%02d:%02d", hours, minutes)
+    }
+    
+    var body: some View {
+        HStack {
+            Text("End of work time:")
+            Spacer()
+            Text(displayTime)
+                .fontWeight(.medium)
+                .monospacedDigit()
+            
+            Stepper("", value: Binding(
+                get: { selectedTime },
+                set: { newValue in
+                    // Round to nearest 10 minutes
+                    let rounded = round(newValue / 600) * 600
+                    selectedTime = max(0, min(86340, rounded))
+                }
+            ), in: 0...86340, step: 600)
+            .labelsHidden()
+        }
+        .padding(.vertical, 4)
     }
 }
