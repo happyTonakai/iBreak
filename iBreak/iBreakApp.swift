@@ -21,25 +21,6 @@ struct iBreakApp: App {
             SettingsView()
                 .environmentObject(settings)
         }
-
-        MenuBarExtra {
-            MenuView()
-                .environmentObject(breakTimer)
-        } label: {
-            if settings.showMenuBarIcon {
-                if breakTimer.currentMode == .working {
-                    // Check if the next break is a long break (workCycle will be 0).
-                    let isLongBreakNext = breakTimer.workCycle == 0
-                    let timerText = breakTimer.timeRemainingFormatted + (isLongBreakNext ? "•" : "")
-                    Text(timerText)
-                } else {
-                    Image(systemName: "cup.and.saucer.fill")
-                }
-            } else {
-                EmptyView()
-            }
-        }
-        .menuBarExtraStyle(.menu)
         .onChange(of: breakTimer.currentMode) { _, newMode in
             if newMode == .onShortBreak || newMode == .onLongBreak {
                 keyMonitor.startMonitoring()
