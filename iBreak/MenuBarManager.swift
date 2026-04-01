@@ -1,14 +1,28 @@
 import AppKit
-import SwiftUI
 import Combine
 
 class MenuBarManager: NSObject {
     static let shared = MenuBarManager()
 
     private var statusItem: NSStatusItem?
+    private var menu: NSMenu?
     private var cancellables = Set<AnyCancellable>()
     private let breakTimer = BreakTimer.shared
     private let settings = SettingsManager.shared
+
+    // Menu item references for dynamic updates
+    private var statusMenuItem: NSMenuItem?
+    private var startTimerMenuItem: NSMenuItem?
+    private var skipBreakMenuItem: NSMenuItem?
+    private var resumeTimerMenuItem: NSMenuItem?
+    private var pauseHeaderMenuItem: NSMenuItem?
+    private var pause30MenuItem: NSMenuItem?
+    private var pause1HourMenuItem: NSMenuItem?
+    private var pause2HoursMenuItem: NSMenuItem?
+    private var pauseUntilMorningMenuItem: NSMenuItem?
+    private var pauseIndefinitelyMenuItem: NSMenuItem?
+    private var pauseSeparatorMenuItem: NSMenuItem?
+    private var resumeSeparatorMenuItem: NSMenuItem?
 
     private override init() {
         super.init()
@@ -19,9 +33,6 @@ class MenuBarManager: NSObject {
 
         if let button = statusItem?.button {
             button.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
-            button.action = #selector(statusItemClicked)
-            button.target = self
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
         setupMenu()
@@ -30,23 +41,75 @@ class MenuBarManager: NSObject {
     }
 
     private func setupMenu() {
-        let menu = NSMenu()
-        let hostingView = NSHostingView(rootView:
-            MenuView()
-                .environmentObject(breakTimer)
-        )
-        // Give the hosting view a reasonable size
-        hostingView.frame = NSRect(x: 0, y: 0, width: 220, height: 420)
+        menu = NSMenu()
+        guard let menu = menu else { return }
 
-        let menuItem = NSMenuItem()
-        menuItem.view = hostingView
-        menu.addItem(menuItem)
+        // Status item (disabled, just shows info)
+        statusMenuItem = NSMenuItem(title: "Status: Working", action: nil, keyEquivalent: "")
+        statusMenuItem?.isEnabled = false
+        menu.addItem(statusMenuItem!)
+
         menu.addItem(.separator())
+
+        // Settings
+        menu.addItem(withTitle: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+
+        menu.addItem(.separator())
+
+        // Start Timer (shown when not running)
+        startTimerMenuItem = NSMenuItem(title: "Start Timer", action: #selector(startTimer), keyEquivalent: "")
+        menu.addItem(startTimerMenuItem!)
+
+        // Skip to Break
+        skipBreakMenuItem = NSMenuItem(title: "Skip to Break", action: #selector(skipBreak), keyEquivalent: "")
+        menu.addItem(skipBreakMenuItem!)
+
+        menu.addItem(.separator())
+
+        // Pause header
+        pauseHeaderMenuItem = NSMenuItem(title: "Pause for...", action: nil, keyEquivalent: "")
+        pauseHeaderMenuItem?.isEnabled = false
+        menu.addItem(pauseHeaderMenuItem!)
+
+        // Pause options
+        pause30MenuItem = NSMenuItem(title: "30 minutes", action: #selector(pauseFor30Minutes), keyEquivalent: "")
+        menu.addItem(pause30MenuItem!)
+
+        pause1HourMenuItem = NSMenuItem(title: "1 hour", action: #selector(pauseFor1Hour), keyEquivalent: "")
+        menu.addItem(pause1HourMenuItem!)
+
+        pause2HoursMenuItem = NSMenuItem(title: "2 hours", action: #selector(pauseFor2Hours), keyEquivalent: "")
+        menu.addItem(pause2HoursMenuItem!)
+
+        pauseUntilMorningMenuItem = NSMenuItem(title: "Until tomorrow morning", action: #selector(pauseUntilMorning), keyEquivalent: "")
+        menu.addItem(pauseUntilMorningMenuItem!)
+
+        pauseIndefinitelyMenuItem = NSMenuItem(title: "Indefinitely", action: #selector(pauseIndefinitely), keyEquivalent: "")
+        menu.addItem(pauseIndefinitelyMenuItem!)
+
+        // Resume separator and item (initially hidden)
+        resumeSeparatorMenuItem = NSMenuItem.separator()
+        menu.addItem(resumeSeparatorMenuItem!)
+
+        resumeTimerMenuItem = NSMenuItem(title: "Resume Timer", action: #selector(resumeTimer), keyEquivalent: "")
+        menu.addItem(resumeTimerMenuItem!)
+
+        menu.addItem(.separator())
+
+        // Version
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        let versionItem = NSMenuItem(title: "Version \(version)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
+
+        // Quit
         menu.addItem(withTitle: "Quit iBreak", action: #selector(quitApp), keyEquivalent: "q")
 
-        // Wire up the menu items' targets
-        if let quitItem = menu.items.last {
-            quitItem.target = self
+        // Set targets
+        for item in menu.items {
+            if item.target == nil && item.action != nil {
+                item.target = self
+            }
         }
 
         statusItem?.menu = menu
@@ -55,17 +118,17 @@ class MenuBarManager: NSObject {
     private func observeTimer() {
         breakTimer.$timeRemainingFormatted
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateTitle() }
+            .sink { [weak self] _ in self?.updateTitle(); self?.updateMenuState() }
             .store(in: &cancellables)
 
         breakTimer.$currentMode
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateTitle() }
+            .sink { [weak self] _ in self?.updateTitle(); self?.updateMenuState() }
             .store(in: &cancellables)
 
         breakTimer.$isRunning
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateTitle() }
+            .sink { [weak self] _ in self?.updateTitle(); self?.updateMenuState() }
             .store(in: &cancellables)
 
         settings.$showMenuBarIcon
@@ -73,8 +136,11 @@ class MenuBarManager: NSObject {
             .sink { [weak self] show in
                 if show {
                     self?.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                    self?.setupButton()
-                    self?.setupMenu()
+                    if let button = self?.statusItem?.button {
+                        button.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
+                    }
+                    self?.statusItem?.menu = self?.menu
+                    self?.updateTitle()
                 } else {
                     if let item = self?.statusItem {
                         NSStatusBar.system.removeStatusItem(item)
@@ -83,15 +149,6 @@ class MenuBarManager: NSObject {
                 }
             }
             .store(in: &cancellables)
-    }
-
-    private func setupButton() {
-        if let button = statusItem?.button {
-            button.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
-            button.action = #selector(statusItemClicked)
-            button.target = self
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        }
     }
 
     private func updateTitle() {
@@ -106,8 +163,82 @@ class MenuBarManager: NSObject {
         }
     }
 
-    @objc private func statusItemClicked() {
-        // Menu is shown automatically by NSStatusItem when menu is set
+    private func updateMenuState() {
+        let mode = breakTimer.currentMode
+        let isRunning = breakTimer.isRunning
+        let isPaused = mode == .paused
+
+        // Update status text
+        let nextBreakType = breakTimer.workCycle == 1 ? "Short Break" : "Long Break"
+        switch mode {
+        case .working:
+            statusMenuItem?.title = "Status: Working - \(nextBreakType)"
+        case .onShortBreak:
+            statusMenuItem?.title = "Status: Short Break"
+        case .onLongBreak:
+            statusMenuItem?.title = "Status: Long Break"
+        case .paused:
+            statusMenuItem?.title = "Status: Paused"
+        }
+
+        // Start Timer: only show when not running and not paused
+        startTimerMenuItem?.isHidden = isRunning || isPaused
+
+        // Skip to Break: show when working or on break
+        skipBreakMenuItem?.isHidden = isPaused
+
+        // Pause items: show when working (not on break, not paused)
+        let showPauseItems = mode == .working && isRunning
+        pauseHeaderMenuItem?.isHidden = !showPauseItems
+        pause30MenuItem?.isHidden = !showPauseItems
+        pause1HourMenuItem?.isHidden = !showPauseItems
+        pause2HoursMenuItem?.isHidden = !showPauseItems
+        pauseUntilMorningMenuItem?.isHidden = !showPauseItems
+        pauseIndefinitelyMenuItem?.isHidden = !showPauseItems
+        pauseSeparatorMenuItem?.isHidden = !showPauseItems
+
+        // Resume items: only show when paused
+        resumeSeparatorMenuItem?.isHidden = !isPaused
+        resumeTimerMenuItem?.isHidden = !isPaused
+    }
+
+    // MARK: - Actions
+
+    @objc private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+
+    @objc private func startTimer() {
+        breakTimer.start(reset: true)
+    }
+
+    @objc private func skipBreak() {
+        breakTimer.transitionToNextState()
+    }
+
+    @objc private func pauseFor30Minutes() {
+        breakTimer.pause(for: .thirtyMinutes)
+    }
+
+    @objc private func pauseFor1Hour() {
+        breakTimer.pause(for: .oneHour)
+    }
+
+    @objc private func pauseFor2Hours() {
+        breakTimer.pause(for: .twoHours)
+    }
+
+    @objc private func pauseUntilMorning() {
+        breakTimer.pause(for: .untilMorning)
+    }
+
+    @objc private func pauseIndefinitely() {
+        breakTimer.pause(for: .indefinitely)
+    }
+
+    @objc private func resumeTimer() {
+        breakTimer.start(reset: false)
     }
 
     @objc private func quitApp() {

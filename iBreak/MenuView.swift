@@ -19,7 +19,6 @@ struct MenuView: View {
                 Logger.log("MenuView: Settings button tapped.", type: .debug)
                 openWindow(id: "settings-window")
             }
-            .keyboardShortcut(",", modifiers: .command)
 
             Divider()
 
@@ -78,7 +77,6 @@ struct MenuView: View {
                 Logger.log("MenuView: Quit iBreak button tapped.", type: .debug)
                 NSApplication.shared.terminate(nil)
             }
-            .keyboardShortcut("q", modifiers: .command)
         }
         .padding()
     }
