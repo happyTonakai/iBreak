@@ -17,6 +17,7 @@ class SettingsManager: ObservableObject {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let isForcedEndOfWorkModeEnabled = "isForcedEndOfWorkModeEnabled"
         static let forcedEndOfWorkTime = "forcedEndOfWorkTime"
+        static let shortBreaksBeforeLongBreak = "shortBreaksBeforeLongBreak"
     }
 
     private let defaults: [String: Any] = [
@@ -31,7 +32,8 @@ class SettingsManager: ObservableObject {
         Keys.areNotificationsEnabled: true,
         Keys.showMenuBarIcon: true,
         Keys.isForcedEndOfWorkModeEnabled: false,
-        Keys.forcedEndOfWorkTime: 18 * 3600 // Default 18:00 (6 PM) in seconds from midnight
+        Keys.forcedEndOfWorkTime: 18 * 3600, // Default 18:00 (6 PM) in seconds from midnight
+        Keys.shortBreaksBeforeLongBreak: 1
     ]
 
     @Published var shortBreakInterval: TimeInterval
@@ -46,6 +48,7 @@ class SettingsManager: ObservableObject {
     @Published var showMenuBarIcon: Bool
     @Published var isForcedEndOfWorkModeEnabled: Bool
     @Published var forcedEndOfWorkTime: TimeInterval
+    @Published var shortBreaksBeforeLongBreak: Int
 
     private init() {
         UserDefaults.standard.register(defaults: defaults)
@@ -62,6 +65,7 @@ class SettingsManager: ObservableObject {
         showMenuBarIcon = UserDefaults.standard.bool(forKey: Keys.showMenuBarIcon)
         isForcedEndOfWorkModeEnabled = UserDefaults.standard.bool(forKey: Keys.isForcedEndOfWorkModeEnabled)
         forcedEndOfWorkTime = UserDefaults.standard.double(forKey: Keys.forcedEndOfWorkTime)
+        shortBreaksBeforeLongBreak = UserDefaults.standard.integer(forKey: Keys.shortBreaksBeforeLongBreak)
     }
 
     func save() {
@@ -77,6 +81,7 @@ class SettingsManager: ObservableObject {
         UserDefaults.standard.set(showMenuBarIcon, forKey: Keys.showMenuBarIcon)
         UserDefaults.standard.set(isForcedEndOfWorkModeEnabled, forKey: Keys.isForcedEndOfWorkModeEnabled)
         UserDefaults.standard.set(forcedEndOfWorkTime, forKey: Keys.forcedEndOfWorkTime)
+        UserDefaults.standard.set(shortBreaksBeforeLongBreak, forKey: Keys.shortBreaksBeforeLongBreak)
     }
 
     func resetToDefaults() {
@@ -92,6 +97,7 @@ class SettingsManager: ObservableObject {
         showMenuBarIcon = defaults[Keys.showMenuBarIcon] as! Bool
         isForcedEndOfWorkModeEnabled = defaults[Keys.isForcedEndOfWorkModeEnabled] as! Bool
         forcedEndOfWorkTime = defaults[Keys.forcedEndOfWorkTime] as! TimeInterval
+        shortBreaksBeforeLongBreak = defaults[Keys.shortBreaksBeforeLongBreak] as! Int
         save()
     }
 }

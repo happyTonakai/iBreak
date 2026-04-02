@@ -15,9 +15,10 @@ final class SettingsWindowManager: ObservableObject {
         
         let contentView = SettingsView()
             .environmentObject(SettingsManager.shared)
+            .environmentObject(BreakTimer.shared)
         
         let newWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 450, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: 450, height: 600),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false

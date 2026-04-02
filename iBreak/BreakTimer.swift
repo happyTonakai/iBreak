@@ -21,6 +21,7 @@ class BreakTimer: ObservableObject {
     @Published var isRunning = false
     @Published var currentMode: TimerMode = .working
     @Published var targetDate: Date?
+    @Published var isLongBreakNext: Bool = false
 
     private let settings = SettingsManager.shared
     var workCycle = 0
@@ -174,14 +175,15 @@ class BreakTimer: ObservableObject {
 
     private func startNextWorkInterval(reset: Bool = false) {
         Logger.log("BreakTimer: startNextWorkInterval() called. workCycle: \(workCycle), reset: \(reset)", type: .debug)
+        let cycleCount = settings.shortBreaksBeforeLongBreak
         if reset {
-            // When reset is true, we start with a short break
             workCycle = 1
         } else {
-            workCycle = (workCycle + 1) % 2
+            workCycle = (workCycle % (cycleCount + 1)) + 1
         }
         currentMode = .working
-        let duration = (workCycle == 1) ? settings.shortBreakInterval : settings.longBreakInterval
+        isLongBreakNext = workCycle == cycleCount + 1
+        let duration = isLongBreakNext ? settings.longBreakInterval : settings.shortBreakInterval
         targetDate = Date().addingTimeInterval(duration)
         scheduleNotification(duration: duration)
         Logger.log("BreakTimer: startNextWorkInterval() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate)), workCycle: \(workCycle)", type: .debug)
@@ -190,12 +192,12 @@ class BreakTimer: ObservableObject {
     private func startNextBreak() {
         Logger.log("BreakTimer: startNextBreak() called. workCycle: \(workCycle)", type: .debug)
         let duration: TimeInterval
-        if workCycle == 1 {
-            currentMode = .onShortBreak
-            duration = settings.shortBreakDuration
-        } else {
+        if isLongBreakNext {
             currentMode = .onLongBreak
             duration = settings.longBreakDuration
+        } else {
+            currentMode = .onShortBreak
+            duration = settings.shortBreakDuration
         }
         targetDate = Date().addingTimeInterval(duration)
         Logger.log("BreakTimer: startNextBreak() finished. currentMode: \(currentMode), targetDate: \(String(describing: targetDate))", type: .debug)
@@ -292,7 +294,7 @@ class BreakTimer: ObservableObject {
             Logger.log("BreakTimer: scheduleNotification() guard: Notifications not enabled or not in working mode.", type: .debug)
             return
         }
-        let isShortBreakNext = workCycle == 1
+        let isShortBreakNext = !isLongBreakNext
         let notificationTime = isShortBreakNext ? 30.0 : 60.0
         let breakType = isShortBreakNext ? "short" : "long"
         if duration > notificationTime {

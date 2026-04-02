@@ -155,7 +155,7 @@ class MenuBarManager: NSObject {
         guard settings.showMenuBarIcon, let button = statusItem?.button else { return }
 
         if breakTimer.currentMode == .working {
-            let isLongBreakNext = breakTimer.workCycle == 0
+            let isLongBreakNext = breakTimer.isLongBreakNext
             let timerText = breakTimer.timeRemainingFormatted + (isLongBreakNext ? " •" : "")
             button.title = timerText
         } else {

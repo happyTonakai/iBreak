@@ -4,6 +4,7 @@ import ApplicationServices
 
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var breakTimer: BreakTimer
     @StateObject private var launchManager = LaunchAtLoginManager()
     @State private var showingResetAlert = false
     @State private var settingsWindow: NSWindow?
@@ -29,6 +30,13 @@ struct SettingsView: View {
 			}
         }
     }
+    
+    private func resetTimerIfNeeded() {
+        guard breakTimer.isRunning else { return }
+        Logger.log("SettingsView: Timer settings changed, resetting timer.", type: .debug)
+        breakTimer.stop(preserveState: false)
+        breakTimer.start(reset: true)
+    }
 
     var body: some View {
         TabView {
@@ -38,6 +46,22 @@ struct SettingsView: View {
                     Section(header: Text("Focus Time").font(.headline)) {
                         CustomSlider(value: $settings.shortBreakInterval, steps: TimeIntervals.workIntervals, label: "Focus time before short break")
                         CustomSlider(value: $settings.longBreakInterval, steps: TimeIntervals.workIntervals, label: "Focus time before long break")
+                    }
+                    .padding(.bottom)
+                    
+                    Section(header: Text("Break Pattern").font(.headline)) {
+                        HStack {
+                            Text("Short breaks before long break:")
+                            Spacer()
+                            Picker("", selection: $settings.shortBreaksBeforeLongBreak) {
+                                ForEach(1...5, id: \.self) { n in
+                                    Text("\(n)").tag(n)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .frame(width: 80)
+                        }
                     }
                     .padding(.bottom)
                     
@@ -51,6 +75,11 @@ struct SettingsView: View {
                 Label("Timers", systemImage: "timer")
             }
             .padding()
+            .onChange(of: settings.shortBreakInterval) { _, _ in resetTimerIfNeeded() }
+            .onChange(of: settings.longBreakInterval) { _, _ in resetTimerIfNeeded() }
+            .onChange(of: settings.shortBreakDuration) { _, _ in resetTimerIfNeeded() }
+            .onChange(of: settings.longBreakDuration) { _, _ in resetTimerIfNeeded() }
+            .onChange(of: settings.shortBreaksBeforeLongBreak) { _, _ in resetTimerIfNeeded() }
 
             // MARK: - Appearance Tab
             VStack(spacing: 20) {
