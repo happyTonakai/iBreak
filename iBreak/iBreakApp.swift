@@ -17,9 +17,8 @@ struct iBreakApp: App {
     }
 
     var body: some Scene {
-        Window("iBreak Settings", id: "settings-window") {
-            SettingsView()
-                .environmentObject(settings)
+        Settings {
+            EmptyView()
         }
         .onChange(of: breakTimer.currentMode) { _, newMode in
             if newMode == .onShortBreak || newMode == .onLongBreak {

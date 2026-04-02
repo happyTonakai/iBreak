@@ -205,9 +205,8 @@ class MenuBarManager: NSObject {
     // MARK: - Actions
 
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let appDelegate = NSApp.delegate as? AppDelegate {
-            appDelegate.showSettingsWindow()
+        Task { @MainActor in
+            SettingsWindowManager.shared.open()
         }
     }
 

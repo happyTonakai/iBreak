@@ -3,7 +3,6 @@ import OSLog
 
 struct MenuView: View {
     @EnvironmentObject var breakTimer: BreakTimer
-    @Environment(\.openWindow) var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -17,7 +16,7 @@ struct MenuView: View {
 
             Button("Settings...") {
                 Logger.log("MenuView: Settings button tapped.", type: .debug)
-                openWindow(id: "settings-window")
+                SettingsWindowManager.shared.open()
             }
 
             Divider()
