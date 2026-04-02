@@ -45,3 +45,14 @@
 "Reset all settings to their default values?" = "Сбросить все настройки до значений по умолчанию?";
 "Reset" = "Сбросить";
 "Cancel" = "Отмена";
+"Break Pattern" = "Режим перерывов";
+"Short breaks before long break:" = "Коротких перерывов перед длинным:";
+"Forced End of Work Mode" = "Принудительное завершение работы";
+"Enable forced end of work mode" = "Включить принудительное завершение";
+"End of work time:" = "Время принудительного завершения:";
+"Start Timer" = "Запустить таймер";
+"Status: Working - %@" = "Статус: В работе - %@";
+"Status: Short Break" = "Статус: Короткий перерыв";
+"Status: Long Break" = "Статус: Длинный перерыв";
+"Status: Paused" = "Статус: Пауза";
+"Version %@" = "Версия %@";

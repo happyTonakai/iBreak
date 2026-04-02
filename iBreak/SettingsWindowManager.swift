@@ -17,8 +17,9 @@ final class SettingsWindowManager: ObservableObject {
             .environmentObject(SettingsManager.shared)
             .environmentObject(BreakTimer.shared)
         
+        // Window size is controlled by .frame() in SettingsView.swift
         let newWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 450, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 450, height: 700),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false

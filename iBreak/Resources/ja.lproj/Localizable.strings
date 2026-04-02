@@ -45,3 +45,14 @@
 "Reset all settings to their default values?" = "すべての設定をデフォルト値に戻しますか？";
 "Reset" = "リセット";
 "Cancel" = "キャンセル";
+"Break Pattern" = "休憩パターン";
+"Short breaks before long break:" = "長い休憩前の短い休憩回数：";
+"Forced End of Work Mode" = "強制終了モード";
+"Enable forced end of work mode" = "強制終了モードを有効にする";
+"End of work time:" = "強制終了時間：";
+"Start Timer" = "タイマー開始";
+"Status: Working - %@" = "ステータス：集中中 - %@";
+"Status: Short Break" = "ステータス：短い休憩中";
+"Status: Long Break" = "ステータス：長い休憩中";
+"Status: Paused" = "ステータス：一時停止中";
+"Version %@" = "バージョン %@";

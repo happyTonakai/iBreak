@@ -45,3 +45,14 @@
 "Reset all settings to their default values?" = "Réinitialiser tous les paramètres à leurs valeurs par défaut ?";
 "Reset" = "Réinitialiser";
 "Cancel" = "Annuler";
+"Break Pattern" = "Modèle de pause";
+"Short breaks before long break:" = "Pauses courtes avant longue pause :";
+"Forced End of Work Mode" = "Mode fin forcée";
+"Enable forced end of work mode" = "Activer le mode fin forcée";
+"End of work time:" = "Heure de fin forcée :";
+"Start Timer" = "Démarrer le minuteur";
+"Status: Working - %@" = "Statut : Concentration - %@";
+"Status: Short Break" = "Statut : En pause courte";
+"Status: Long Break" = "Statut : En pause longue";
+"Status: Paused" = "Statut : En pause";
+"Version %@" = "Version %@";

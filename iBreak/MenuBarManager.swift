@@ -45,65 +45,65 @@ class MenuBarManager: NSObject {
         guard let menu = menu else { return }
 
         // Status item (disabled, just shows info)
-        statusMenuItem = NSMenuItem(title: "Status: Working", action: nil, keyEquivalent: "")
+        statusMenuItem = NSMenuItem(title: NSLocalizedString("Status: Working", comment: ""), action: nil, keyEquivalent: "")
         statusMenuItem?.isEnabled = false
         menu.addItem(statusMenuItem!)
 
         menu.addItem(.separator())
 
         // Settings
-        menu.addItem(withTitle: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        menu.addItem(withTitle: NSLocalizedString("Settings...", comment: ""), action: #selector(openSettings), keyEquivalent: ",")
 
         menu.addItem(.separator())
 
         // Start Timer (shown when not running)
-        startTimerMenuItem = NSMenuItem(title: "Start Timer", action: #selector(startTimer), keyEquivalent: "")
+        startTimerMenuItem = NSMenuItem(title: NSLocalizedString("Start Timer", comment: ""), action: #selector(startTimer), keyEquivalent: "")
         menu.addItem(startTimerMenuItem!)
 
         // Skip to Break
-        skipBreakMenuItem = NSMenuItem(title: "Skip to Break", action: #selector(skipBreak), keyEquivalent: "")
+        skipBreakMenuItem = NSMenuItem(title: NSLocalizedString("Skip to Break", comment: ""), action: #selector(skipBreak), keyEquivalent: "")
         menu.addItem(skipBreakMenuItem!)
 
         menu.addItem(.separator())
 
         // Pause header
-        pauseHeaderMenuItem = NSMenuItem(title: "Pause for...", action: nil, keyEquivalent: "")
+        pauseHeaderMenuItem = NSMenuItem(title: NSLocalizedString("Pause for...", comment: ""), action: nil, keyEquivalent: "")
         pauseHeaderMenuItem?.isEnabled = false
         menu.addItem(pauseHeaderMenuItem!)
 
         // Pause options
-        pause30MenuItem = NSMenuItem(title: "30 minutes", action: #selector(pauseFor30Minutes), keyEquivalent: "")
+        pause30MenuItem = NSMenuItem(title: NSLocalizedString("30 minutes", comment: ""), action: #selector(pauseFor30Minutes), keyEquivalent: "")
         menu.addItem(pause30MenuItem!)
 
-        pause1HourMenuItem = NSMenuItem(title: "1 hour", action: #selector(pauseFor1Hour), keyEquivalent: "")
+        pause1HourMenuItem = NSMenuItem(title: NSLocalizedString("1 hour", comment: ""), action: #selector(pauseFor1Hour), keyEquivalent: "")
         menu.addItem(pause1HourMenuItem!)
 
-        pause2HoursMenuItem = NSMenuItem(title: "2 hours", action: #selector(pauseFor2Hours), keyEquivalent: "")
+        pause2HoursMenuItem = NSMenuItem(title: NSLocalizedString("2 hours", comment: ""), action: #selector(pauseFor2Hours), keyEquivalent: "")
         menu.addItem(pause2HoursMenuItem!)
 
-        pauseUntilMorningMenuItem = NSMenuItem(title: "Until tomorrow morning", action: #selector(pauseUntilMorning), keyEquivalent: "")
+        pauseUntilMorningMenuItem = NSMenuItem(title: NSLocalizedString("Until tomorrow morning", comment: ""), action: #selector(pauseUntilMorning), keyEquivalent: "")
         menu.addItem(pauseUntilMorningMenuItem!)
 
-        pauseIndefinitelyMenuItem = NSMenuItem(title: "Indefinitely", action: #selector(pauseIndefinitely), keyEquivalent: "")
+        pauseIndefinitelyMenuItem = NSMenuItem(title: NSLocalizedString("Indefinitely", comment: ""), action: #selector(pauseIndefinitely), keyEquivalent: "")
         menu.addItem(pauseIndefinitelyMenuItem!)
 
         // Resume separator and item (initially hidden)
         resumeSeparatorMenuItem = NSMenuItem.separator()
         menu.addItem(resumeSeparatorMenuItem!)
 
-        resumeTimerMenuItem = NSMenuItem(title: "Resume Timer", action: #selector(resumeTimer), keyEquivalent: "")
+        resumeTimerMenuItem = NSMenuItem(title: NSLocalizedString("Resume Timer", comment: ""), action: #selector(resumeTimer), keyEquivalent: "")
         menu.addItem(resumeTimerMenuItem!)
 
         menu.addItem(.separator())
 
         // Version
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        let versionItem = NSMenuItem(title: "Version \(version)", action: nil, keyEquivalent: "")
+        let versionItem = NSMenuItem(title: String(format: NSLocalizedString("Version %@", comment: ""), version), action: nil, keyEquivalent: "")
         versionItem.isEnabled = false
         menu.addItem(versionItem)
 
         // Quit
-        menu.addItem(withTitle: "Quit iBreak", action: #selector(quitApp), keyEquivalent: "q")
+        menu.addItem(withTitle: NSLocalizedString("Quit iBreak", comment: ""), action: #selector(quitApp), keyEquivalent: "q")
 
         // Set targets
         for item in menu.items {
@@ -169,16 +169,16 @@ class MenuBarManager: NSObject {
         let isPaused = mode == .paused
 
         // Update status text
-        let nextBreakType = breakTimer.workCycle == 1 ? "Short Break" : "Long Break"
+        let nextBreakType = breakTimer.isLongBreakNext ? NSLocalizedString("Long Break", comment: "") : NSLocalizedString("Short Break", comment: "")
         switch mode {
         case .working:
-            statusMenuItem?.title = "Status: Working - \(nextBreakType)"
+            statusMenuItem?.title = String(format: NSLocalizedString("Status: Working - %@", comment: ""), nextBreakType)
         case .onShortBreak:
-            statusMenuItem?.title = "Status: Short Break"
+            statusMenuItem?.title = NSLocalizedString("Status: Short Break", comment: "")
         case .onLongBreak:
-            statusMenuItem?.title = "Status: Long Break"
+            statusMenuItem?.title = NSLocalizedString("Status: Long Break", comment: "")
         case .paused:
-            statusMenuItem?.title = "Status: Paused"
+            statusMenuItem?.title = NSLocalizedString("Status: Paused", comment: "")
         }
 
         // Start Timer: only show when not running and not paused

@@ -142,7 +142,7 @@ struct SettingsView: View {
             }
             .padding()
         }
-        .frame(width: 400, height: 350)
+        .frame(width: 400, height: 500)
         .background(WindowAccessor(window: $settingsWindow))
         .onChange(of: settingsWindow) { _, newWindow in
             if let window = newWindow {

@@ -45,3 +45,14 @@
 "onShortBreak" = "On Short Break";
 "onLongBreak" = "On Long Break";
 "paused" = "Paused";
+"Break Pattern" = "Break Pattern";
+"Short breaks before long break:" = "Short breaks before long break:";
+"Forced End of Work Mode" = "Forced End of Work Mode";
+"Enable forced end of work mode" = "Enable forced end of work mode";
+"End of work time:" = "End of work time:";
+"Start Timer" = "Start Timer";
+"Status: Working - %@" = "Status: Working - %@";
+"Status: Short Break" = "Status: Short Break";
+"Status: Long Break" = "Status: Long Break";
+"Status: Paused" = "Status: Paused";
+"Version %@" = "Version %@";

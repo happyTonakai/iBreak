@@ -45,3 +45,14 @@
 "onShortBreak" = "短休息中";
 "onLongBreak" = "长休息中";
 "paused" = "已暂停";
+"Break Pattern" = "休息模式";
+"Short breaks before long break:" = "长休息前短休息次数：";
+"Forced End of Work Mode" = "强制结束工作模式";
+"Enable forced end of work mode" = "启用强制结束工作模式";
+"End of work time:" = "强制结束工作时间：";
+"Start Timer" = "开始计时";
+"Status: Working - %@" = "状态：专注中 - %@";
+"Status: Short Break" = "状态：短休息中";
+"Status: Long Break" = "状态：长休息中";
+"Status: Paused" = "状态：已暂停";
+"Version %@" = "版本 %@";
