@@ -110,7 +110,7 @@ struct SettingsView: View {
                     }
                     .padding(.bottom)
                     
-                    Section(header: Text("Forced End of Work Mode").font(.headline)) {
+                    Section {
                         Toggle(isOn: $settings.isForcedEndOfWorkModeEnabled) { Text("Enable forced end of work mode") }
                         if settings.isForcedEndOfWorkModeEnabled {
                             ForcedEndOfWorkTimePicker(selectedTime: $settings.forcedEndOfWorkTime)

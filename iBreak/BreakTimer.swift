@@ -105,7 +105,12 @@ class BreakTimer: ObservableObject {
     
     func skipBreak() {
         Logger.log("BreakTimer: skipBreak() called. currentMode: \(currentMode)", type: .debug)
-        NotificationManager.shared.cancelNotifications()
+        
+        // Check if strict mode is enabled
+        if settings.isStrictModeEnabled {
+            Logger.log("BreakTimer: skipBreak() blocked - strict mode is enabled.", type: .info)
+            return
+        }
         
         // Check if forced end of work mode is active
         if isForcedEndOfWorkModeActive() {
@@ -113,6 +118,7 @@ class BreakTimer: ObservableObject {
             return
         }
         
+        NotificationManager.shared.cancelNotifications()
         if currentMode == .onShortBreak || currentMode == .onLongBreak { startNextWorkInterval() }
         Logger.log("BreakTimer: skipBreak() finished.", type: .debug)
     }
