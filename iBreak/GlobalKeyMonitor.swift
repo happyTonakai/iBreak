@@ -64,14 +64,22 @@ class GlobalKeyMonitor: ObservableObject {
                 let timer = BreakTimer.shared
                 
                 if timer.currentMode == .onShortBreak || timer.currentMode == .onLongBreak {
-                    // On break: block all keys except backspace (which triggers skipBreak if not strict mode)
+                    // On break: block all keys except backspace and whitelisted system shortcuts
                     if keyCode == 51 {
                         // Backspace: call skipBreak but still block the event from reaching other apps
                         DispatchQueue.main.async {
                             monitor.handleBackspace()
                         }
+                        return nil
                     }
-                    // Block ALL keyboard events during break
+                    
+                    // Check if this is a whitelisted system shortcut (e.g., Command+Control+Q for lock screen)
+                    if monitor.isWhitelistedShortcut(event) {
+                        Logger.log("GlobalKeyMonitor: Allowing whitelisted shortcut during break", type: .info)
+                        return Unmanaged.passRetained(event)
+                    }
+                    
+                    // Block all other keyboard events during break
                     return nil
                 }
                 
@@ -102,6 +110,18 @@ class GlobalKeyMonitor: ObservableObject {
             eventTap = nil
             eventTapSource = nil
         }
+    }
+    
+    private func isWhitelistedShortcut(_ event: CGEvent) -> Bool {
+        let flags = event.flags
+        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+        
+        // Command + Control + Q (Lock Screen)
+        if flags.contains(.maskCommand) && flags.contains(.maskControl) && keyCode == 0x0C {
+            return true
+        }
+        
+        return false
     }
     
     private func handleBackspace() {
