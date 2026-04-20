@@ -154,9 +154,6 @@ struct SettingsView: View {
             Button { settings.resetToDefaults() } label: { Text("Reset") }
             Button(role: .cancel) { } label: { Text("Cancel") }
         }
-        .onDisappear {
-            settings.save()
-        }
         .background(
             Button("") {
                 if let window = settingsWindow {

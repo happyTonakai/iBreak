@@ -18,8 +18,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     // This function is automatically called by the system just before the app quits.
     func applicationWillTerminate(_ aNotification: Notification) {
-        Logger.log("App is terminating. Cancelling all scheduled notifications.", type: .info)
-        // We simply call our existing cancel function.
+        Logger.log("App is terminating. Saving settings and cancelling notifications.", type: .info)
+        SettingsManager.shared.save()
         NotificationManager.shared.cancelNotifications()
     }
     
