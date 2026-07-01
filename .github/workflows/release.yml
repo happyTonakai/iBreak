@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.6.7)'
+        required: true
+        type: string
+      notes:
+        description: 'Release notes (markdown, optional)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write  # required to create releases and tags
+
+jobs:
+  build:
+    name: Build and release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Archive
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          xcodebuild \
+            -project iBreak.xcodeproj \
+            -scheme iBreak \
+            -configuration Release \
+            -archivePath build/iBreak.xcarchive \
+            -derivedDataPath build/derived \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Verify built version
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          BUILT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/iBreak.xcarchive/Products/Applications/iBreak.app/Contents/Info.plist)
+          if [ "$BUILT" != "$VERSION" ]; then
+            echo "::error::Version mismatch: expected $VERSION, got $BUILT"
+            exit 1
+          fi
+          echo "Built version: $BUILT ✓"
+
+      - name: Zip artifact
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          # ditto preserves macOS app metadata, symlinks, and code signature resources
+          # far better than `zip` for .app bundles
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/iBreak.xcarchive/Products/Applications/iBreak.app \
+            "iBreak-${VERSION}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "iBreak ${{ github.event.inputs.version }}"
+          tag_name: "v${{ github.event.inputs.version }}"
+          body: ${{ github.event.inputs.notes }}
+          draft: false
+          prerelease: false
+          files: iBreak-${{ github.event.inputs.version }}.zip
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
