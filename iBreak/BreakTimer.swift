@@ -28,6 +28,8 @@ class BreakTimer: ObservableObject {
     private var idleMonitor = IdleTimeMonitor()
     private var timer: AnyCancellable?
     private var pausedUntil: Date?
+    // Latch so we only reset the timer on the *transition* into idle, not every tick.
+    private var idleResetApplied = false
 
     private init() {
         Logger.log("BreakTimer: init() called.", type: .debug)
@@ -36,6 +38,9 @@ class BreakTimer: ObservableObject {
 
     func start(reset: Bool = false) {
         Logger.log("BreakTimer: start() called. isRunning: \(isRunning), currentMode: \(currentMode)", type: .debug)
+        // Clear the idle latch so the new session starts from a clean state.
+        // Otherwise, a stale true could prevent the first idle reset on the next session.
+        idleResetApplied = false
         NotificationManager.shared.cancelNotifications() // Clear any old notifications
         
         // No guard here. Always attempt to start/resume.
@@ -273,9 +278,17 @@ class BreakTimer: ObservableObject {
         if currentMode == .working {
             let currentIdleTime = idleMonitor.getIdleTime()
             if currentIdleTime > settings.idleThreshold {
-                Logger.log("BreakTimer: tick(): User is idle, resetting work timer.", type: .debug)
-                NotificationManager.shared.cancelNotifications()
-                startNextWorkInterval(reset: true)
+                if !idleResetApplied {
+                    idleResetApplied = true
+                    Logger.log("BreakTimer: User went idle, resetting work timer once.", type: .info)
+                    NotificationManager.shared.cancelNotifications()
+                    startNextWorkInterval(reset: true)
+                }
+                // While idle, skip the per-second UI update — the user isn't watching.
+                return
+            } else if idleResetApplied {
+                idleResetApplied = false
+                Logger.log("BreakTimer: User returned from idle.", type: .info)
             }
         }
         if let targetDate = targetDate {

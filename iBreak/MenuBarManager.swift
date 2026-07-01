@@ -116,19 +116,26 @@ class MenuBarManager: NSObject {
     }
 
     private func observeTimer() {
+        // timeRemainingFormatted changes every second; only the title needs to refresh.
+        // Running updateMenuState() here was reassigning identical values to ~12 NSMenuItems
+        // every second, which AppKit was treating as real changes — a major energy drain.
         breakTimer.$timeRemainingFormatted
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateTitle(); self?.updateMenuState() }
+            .sink { [weak self] _ in self?.updateTitle() }
             .store(in: &cancellables)
 
+        // currentMode / isRunning rarely change; removeDuplicates ensures we only
+        // touch the menu when the state actually transitions.
         breakTimer.$currentMode
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.updateTitle(); self?.updateMenuState() }
             .store(in: &cancellables)
 
         breakTimer.$isRunning
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateTitle(); self?.updateMenuState() }
+            .sink { [weak self] _ in self?.updateMenuState() }
             .store(in: &cancellables)
 
         settings.$showMenuBarIcon
